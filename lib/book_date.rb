@@ -26,36 +26,43 @@ class BookDate
     doc = Nokogiri.XML(response)
 
     @@book_id = doc.css("search results best_book id").first.text
+    @@author = doc.css("search results best_book author name").first.text
+    @@book_title = doc.css("best_book title").first.text
   end
 
-  def self.make_review
-    response = self.access_token.post('/review.xml', {
-             'book_id' => self.book_id,
-             'review[review]' => 'test review',
-             'review[rating]' => 5
-           })
-    binding.pry
-  end
 
   def self.add_to_shelf
-    # @response = @token.post('/people', @person.to_xml, { 'Accept'=>'application/xml', 'Content-Type' => 'application/xml' })
-    shelf = self.access_token.post('/shelf/add_to_shelf.xml', 
+    self.access_token.post('/shelf/add_to_shelf.xml', 
              {'book_id' => book_id,
              'name' => 'to-read'},
               { 'Accept'=>'application/xml', 'Content-Type' => 'application/xml' 
               })
-
+    puts "Added #{@@book_title} by #{@@author}"
   end
+
+  def self.undo?
+    puts "Wrong choice?"
+    input = gets.chomp
+    if input.downcase.include?("y") 
+      self.access_token.post('/shelf/add_to_shelf.xml', 
+               {'book_id' => book_id,
+               'name' => 'to-read',
+               'a' => 'remove'},
+                { 'Accept'=>'application/xml', 'Content-Type' => 'application/xml' 
+                })
+      puts "Ok, deleted #{@@book_title} by #{@@author}"
+    end
+  end
+
+
 
   def self.access_token 
     @@access_token
   end
+
 
   def self.book_id
     @@book_id
   end
 
 end
-
-
-# https://www.goodreads.com/shelf/list.xml?key=RWerle4TWzIfezo2iRtJA&user_id
